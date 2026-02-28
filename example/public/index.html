@@ -4,29 +4,112 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WebRTC Export Test</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #fff;
+      color: #111;
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: normal;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+    }
+
+    h2 {
+      font-size: 14px;
+      font-weight: normal;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    button {
+      padding: 0.4rem 1.5rem;
+      font-size: 14px;
+      font-family: monospace;
+      font-weight: normal;
+      cursor: pointer;
+      border: 1px solid #111;
+      background: #fff;
+      color: #111;
+    }
+
+    button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .video-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .video-label {
+      font-size: 14px;
+      font-weight: normal;
+    }
+
+    video {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #111;
+      border: 1px solid #ccc;
+      display: block;
+    }
+
+    .warning {
+      font-size: 14px;
+      font-weight: normal;
+    }
+  </style>
 </head>
 <body>
 
-  <h2>WebRTC Simple Test</h2>
+  <h2>Simple Test</h2>
 
-  <button id="startBtn">Start</button>
-  <button id="stopBtn" disabled>Stop</button>
+  <div class="controls">
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" disabled>Stop</button>
+  </div>
 
-  <video id="localVideo" autoplay playsinline muted></video>
-  <video id="remoteVideo" autoplay playsinline></video>
+  <div class="video-grid">
+    <div class="video-wrap">
+      <span class="video-label">Local (Alice)</span>
+      <video id="localVideo" autoplay playsinline muted></video>
+    </div>
+    <div class="video-wrap">
+      <span class="video-label">Remote (Bob)</span>
+      <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+  </div>
 
   <script type="module">
-    import { WebRTCExporter } from '../../dist/index.esm.js';
+    import { WebRTCExporter } from 'https://unpkg.com/webrtc-stats-exporter/dist/index.esm.js';
 
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
 
-    let pc1;
-    let pc2;
-    let localStream;
-    let exporter;
+    let pc1, pc2, localStream, exporter;
 
     startBtn.onclick = async () => {
       startBtn.disabled = true;
@@ -37,15 +120,12 @@
         sessionName: 'Simple Test',
         url: 'http://localhost:9999/api/v1/webrtc-stats',
         getStatsInterval: 5000,
-        batchSize: 1,
-        flushInterval: 5000
+        batchSize: 10,
+        flushInterval: 5000,
+        debug: true,
       });
 
-      localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true
-      });
-
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
       localVideo.srcObject = localStream;
 
       pc1 = new RTCPeerConnection();
@@ -56,14 +136,9 @@
 
       pc1.onicecandidate = e => e.candidate && pc2.addIceCandidate(e.candidate);
       pc2.onicecandidate = e => e.candidate && pc1.addIceCandidate(e.candidate);
+      pc2.ontrack = e => { remoteVideo.srcObject = e.streams[0]; };
 
-      pc2.ontrack = e => {
-        remoteVideo.srcObject = e.streams[0];
-      };
-
-      localStream.getTracks().forEach(track =>
-        pc1.addTrack(track, localStream)
-      );
+      localStream.getTracks().forEach(track => pc1.addTrack(track, localStream));
 
       const offer = await pc1.createOffer();
       await pc1.setLocalDescription(offer);
@@ -80,14 +155,8 @@
 
       if (pc1) pc1.close();
       if (pc2) pc2.close();
-
-      if (localStream) {
-        localStream.getTracks().forEach(t => t.stop());
-      }
-
-      if (exporter) {
-        await exporter.destroy();
-      }
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      if (exporter) await exporter.destroy();
 
       localVideo.srcObject = null;
       remoteVideo.srcObject = null;
