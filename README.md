@@ -137,6 +137,9 @@ exporter.on('stats', ({ data }) => {
 
 Every batch is a `POST` with this JSON body:
 
+<details>
+<summary>Click to expand JSON</summary>
+
 ```json
 {
   "sessionId": "test-1772304502224",
@@ -1316,6 +1319,8 @@ Every batch is a `POST` with this JSON body:
   ]
 }
 ```
+
+</details>
 
 ---
 
