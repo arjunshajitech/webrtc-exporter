@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebRTC Export Test</title>
+</head>
+<body>
+
+  <h2>WebRTC Simple Test</h2>
+
+  <button id="startBtn">Start</button>
+  <button id="stopBtn" disabled>Stop</button>
+
+  <video id="localVideo" autoplay playsinline muted></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <script type="module">
+    import { WebRTCExporter } from '../../dist/index.esm.js';
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+
+    let pc1;
+    let pc2;
+    let localStream;
+    let exporter;
+
+    startBtn.onclick = async () => {
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      exporter = new WebRTCExporter({
+        sessionId: `test-${Date.now()}`,
+        sessionName: 'Simple Test',
+        url: 'http://localhost:9999/api/v1/webrtc-stats',
+        getStatsInterval: 5000,
+        batchSize: 1,
+        flushInterval: 5000
+      });
+
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true
+      });
+
+      localVideo.srcObject = localStream;
+
+      pc1 = new RTCPeerConnection();
+      pc2 = new RTCPeerConnection();
+
+      exporter.addPeer({ peerId: 'alice', peerName: 'Alice', pc: pc1 });
+      exporter.addPeer({ peerId: 'bob', peerName: 'Bob', pc: pc2 });
+
+      pc1.onicecandidate = e => e.candidate && pc2.addIceCandidate(e.candidate);
+      pc2.onicecandidate = e => e.candidate && pc1.addIceCandidate(e.candidate);
+
+      pc2.ontrack = e => {
+        remoteVideo.srcObject = e.streams[0];
+      };
+
+      localStream.getTracks().forEach(track =>
+        pc1.addTrack(track, localStream)
+      );
+
+      const offer = await pc1.createOffer();
+      await pc1.setLocalDescription(offer);
+      await pc2.setRemoteDescription(offer);
+
+      const answer = await pc2.createAnswer();
+      await pc2.setLocalDescription(answer);
+      await pc1.setRemoteDescription(answer);
+    };
+
+    stopBtn.onclick = async () => {
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+
+      if (pc1) pc1.close();
+      if (pc2) pc2.close();
+
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+      }
+
+      if (exporter) {
+        await exporter.destroy();
+      }
+
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
+    };
+  </script>
+
+</body>
+</html>

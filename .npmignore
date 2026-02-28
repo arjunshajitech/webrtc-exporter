@@ -6,3 +6,5 @@ jest.config.js
 node_modules/
 *.log
 .github/
+.vscode/
+example/
