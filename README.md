@@ -1,13 +1,13 @@
 # webrtc-stats-exporter
 
-WebRTC `pc.getStats()` collector with **HTTP export**, **batching**, and **retry**.
+> WebRTC Stats Exporter is a lightweight utility designed to collect, parse, and simplify WebRTC RTCPeerConnection statistics and publish them to a local collector or an external API.
 
 ---
 
 ## Installation
 
 ```bash
-npm install webrtc-stats-exporter
+npm i webrtc-stats-exporter
 ```
 
 ---
@@ -35,7 +35,7 @@ exporter.addPeer({
   pc:       peerConnection,   // RTCPeerConnection instance
 });
 
-// Local events still fire
+// Local events
 exporter.on('stats', (event) => {
   console.log('audio inbound:',  event.data.audio.inbound);
   console.log('video outbound:', event.data.video.outbound);
