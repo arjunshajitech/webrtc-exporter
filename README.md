@@ -1,4 +1,4 @@
-# webrtc-exporter
+# webrtc-stats-exporter
 
 WebRTC `pc.getStats()` collector with **HTTP export**, **batching**, and **retry**.
 
@@ -7,7 +7,7 @@ WebRTC `pc.getStats()` collector with **HTTP export**, **batching**, and **retry
 ## Installation
 
 ```bash
-npm install webrtc-exporter
+npm install webrtc-stats-exporter
 ```
 
 ---
@@ -15,7 +15,7 @@ npm install webrtc-exporter
 ## Quick Start
 
 ```js
-import { WebRTCExporter } from 'webrtc-exporter';
+import { WebRTCExporter } from 'webrtc-stats-exporter';
 
 const exporter = new WebRTCExporter({
   sessionId:        'call-abc-123',
