@@ -11,8 +11,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/api/v1/webrtc-stats', (req, res) => {
-  // console.log('Received body:');
-  // console.log(JSON.stringify(req.body, null, 2));
+  console.log('Received body:');
+  console.log(JSON.stringify(req.body, null, 2));
   res.json({ success: true });
 });
 
